@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+  annotations:
+    discovery/enabled: true
+    discovery/endpoint: discovery
+spec:
+  rules:
+  - host: test.local.com
+    http:
+      paths:
+      - path: /testpath
+        pathType: Prefix
+        backend:
+            serviceName: test
+            servicePort: 80
