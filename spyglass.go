@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"path/filepath"
+	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -14,6 +15,11 @@ import (
 )
 
 func main() {
+	http.HandleFunc("/", discovery)
+	http.ListenAndServe(":8090", nil)
+}
+
+func discovery(w http.ResponseWriter, req *http.Request) {
 	clientset := initK8Client(true)
 
 	ingresses, err := clientset.ExtensionsV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
@@ -23,9 +29,16 @@ func main() {
 	}
 	fmt.Printf("There are %d ingress in the cluster\n", len(ingresses.Items))
 
+	var urls []string
 	for ingress := range ingresses.Items {
 		fmt.Println(ingresses.Items[ingress].Spec.Rules[0].Host)
+		urls = append(urls, "https://"+ingresses.Items[ingress].Spec.Rules[0].Host)
 	}
+
+	js, err := json.Marshal(urls)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 }
 
 func initK8Client(localEnvironment bool) *kubernetes.Clientset {
@@ -40,7 +53,9 @@ func initK8Client(localEnvironment bool) *kubernetes.Clientset {
 	} else {
 		var kubeconfig *string
 		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+			var path = "C:\\Users\\admin\\.kube\\config"
+			kubeconfig = &path
+			// kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 		} else {
 			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 		}
