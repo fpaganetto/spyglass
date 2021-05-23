@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -14,14 +15,25 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+var clientset *kubernetes.Clientset
+
 func main() {
+	localEnvironment := flag.Bool("local", false, "(optional) run from local environment")
+	var kubeconfig *string
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
+	flag.Parse()
+
+	clientset = initK8Client(*localEnvironment, *kubeconfig)
+
 	http.HandleFunc("/", discovery)
 	http.ListenAndServe(":8090", nil)
 }
 
 func discovery(w http.ResponseWriter, req *http.Request) {
-	clientset := initK8Client(true)
-
 	ingresses, err := clientset.ExtensionsV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
@@ -41,30 +53,20 @@ func discovery(w http.ResponseWriter, req *http.Request) {
 	w.Write(js)
 }
 
-func initK8Client(localEnvironment bool) *kubernetes.Clientset {
+func initK8Client(localEnvironment bool, kubeConfigPath string) *kubernetes.Clientset {
 	var config *rest.Config
 	var err error
 
-	if !localEnvironment {
-		config, err = rest.InClusterConfig()
-		if err != nil {
-			panic(err.Error())
-		}
+	if localEnvironment {
+		fmt.Println("Starting using local kubeconfig configuration")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	} else {
-		var kubeconfig *string
-		if home := homedir.HomeDir(); home != "" {
-			var path = "C:\\Users\\admin\\.kube\\config"
-			kubeconfig = &path
-			// kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-		} else {
-			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-		}
-		flag.Parse()
+		fmt.Println("Starting using cluster configuration")
+		config, err = rest.InClusterConfig()
+	}
 
-		config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-		if err != nil {
-			panic(err.Error())
-		}
+	if err != nil {
+		panic(err.Error())
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
