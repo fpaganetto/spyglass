@@ -15,6 +15,12 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+type discoveredApi struct {
+	Name      string `json:"name"`
+	Url       string `json:"url"`
+	Discovery string `json:"discovery"`
+}
+
 var clientset *kubernetes.Clientset
 
 func main() {
@@ -41,10 +47,14 @@ func discovery(w http.ResponseWriter, req *http.Request) {
 	}
 	fmt.Printf("There are %d ingress in the cluster\n", len(ingresses.Items))
 
-	var urls []string
-	for ingress := range ingresses.Items {
-		fmt.Println(ingresses.Items[ingress].Spec.Rules[0].Host)
-		urls = append(urls, "https://"+ingresses.Items[ingress].Spec.Rules[0].Host)
+	var urls []discoveredApi
+	for i := range ingresses.Items {
+		ingress := ingresses.Items[i]
+		if name, exists := ingress.Annotations["spyglass/name"]; exists {
+			api := discoveredApi{name, ingress.Spec.Rules[0].Host, ingress.Annotations["spyglass/discovery"]}
+			fmt.Println(ingress.Spec.Rules[0].Host)
+			urls = append(urls, api)
+		}
 	}
 
 	js, err := json.Marshal(urls)

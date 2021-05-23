@@ -1,13 +1,28 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: test-ingress
-  # annotations:
-  #   discovery/enabled: true
-  #   discovery/endpoint: discovery
+  name: test-ingress-enabled
+  annotations:
+    spyglass/name: "apiName"
+    spyglass/endpoint: "discovery"
 spec:
   rules:
-  - host: test.local.com
+  - host: test-enabled.local.com
+    http:
+      paths:
+      - path: /testpath
+        pathType: Prefix
+        backend:
+            serviceName: test1
+            servicePort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress-disabled
+spec:
+  rules:
+  - host: test-disabled.local.com
     http:
       paths:
       - path: /testpath
