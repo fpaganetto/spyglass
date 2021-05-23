@@ -52,7 +52,7 @@ func discovery(w http.ResponseWriter, req *http.Request) {
 		ingress := ingresses.Items[i]
 		if name, exists := ingress.Annotations["spyglass/name"]; exists {
 			api := DiscoveredApi{name, ingress.Spec.Rules[0].Host, ingress.Annotations["spyglass/discovery"]}
-			fmt.Println(ingress.Spec.Rules[0].Host)
+			fmt.Printf("%+v\n", api)
 			urls = append(urls, api)
 		}
 	}
