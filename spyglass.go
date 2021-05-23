@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-type discoveredApi struct {
+type DiscoveredApi struct {
 	Name      string `json:"name"`
 	Url       string `json:"url"`
 	Discovery string `json:"discovery"`
@@ -47,11 +47,11 @@ func discovery(w http.ResponseWriter, req *http.Request) {
 	}
 	fmt.Printf("There are %d ingress in the cluster\n", len(ingresses.Items))
 
-	var urls []discoveredApi
+	var urls []DiscoveredApi
 	for i := range ingresses.Items {
 		ingress := ingresses.Items[i]
 		if name, exists := ingress.Annotations["spyglass/name"]; exists {
-			api := discoveredApi{name, ingress.Spec.Rules[0].Host, ingress.Annotations["spyglass/discovery"]}
+			api := DiscoveredApi{name, ingress.Spec.Rules[0].Host, ingress.Annotations["spyglass/discovery"]}
 			fmt.Println(ingress.Spec.Rules[0].Host)
 			urls = append(urls, api)
 		}
