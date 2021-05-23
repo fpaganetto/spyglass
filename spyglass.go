@@ -47,17 +47,16 @@ func discovery(w http.ResponseWriter, req *http.Request) {
 	}
 	fmt.Printf("There are %d ingress in the cluster\n", len(ingresses.Items))
 
-	var urls []DiscoveredApi
-	for i := range ingresses.Items {
-		ingress := ingresses.Items[i]
+	var apis []DiscoveredApi
+	for _, ingress := range ingresses.Items {
 		if name, exists := ingress.Annotations["spyglass/name"]; exists {
 			api := DiscoveredApi{name, ingress.Spec.Rules[0].Host, ingress.Annotations["spyglass/discovery"]}
 			fmt.Printf("%+v\n", api)
-			urls = append(urls, api)
+			apis = append(apis, api)
 		}
 	}
 
-	js, err := json.Marshal(urls)
+	js, err := json.Marshal(formatResponse(apis))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
@@ -85,4 +84,21 @@ func initK8Client(localEnvironment bool, kubeConfigPath string) *kubernetes.Clie
 	}
 
 	return clientset
+}
+
+func formatResponse(apis []DiscoveredApi) interface{} {
+	objectStyle := true //XXX from flag, global variable?
+	if objectStyle {
+		type DiscoveredApiObjectDto struct {
+			Url       string `json:"url"`
+			Discovery string `json:"discovery"`
+		}
+		toReturn := make(map[string]DiscoveredApiObjectDto)
+		for _, api := range apis {
+			toReturn[api.Name] = DiscoveredApiObjectDto{api.Url, api.Discovery}
+		}
+		return toReturn
+	} else {
+		return apis
+	}
 }
