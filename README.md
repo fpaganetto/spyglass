@@ -1,6 +1,8 @@
+# Spyglass
+
 Spyglass is a micro-api that allows exposing domain names hosted in the Kubernetes cluster.
 
-# How to use it
+## How to use it
 To expose a domain, include the annotation `spyglass/name` on the ingress manifest on the annotation section:
 ```yaml
 apiVersion: extensions/v1beta1
@@ -30,15 +32,15 @@ The result of doing a request to `/` will be a json with the data corresponding 
 }
 ```
 
-# Run in Kubernetes
+## Run in Kubernetes
 
-## Using Helm
+### Using Helm
 ```bash
 cd ./helm/spyglass
 helm install spyglass .
 ```
 
-## Using kubectl
+### Using kubectl
 ```bash
 kubectl create clusterrolebinding spyglass --clusterrole=view --serviceaccount=default:default
 kubectl run --rm -i spyglass --image=fpaganetto/spyglass
@@ -46,7 +48,7 @@ kubectl port-forward deployment/spyglass 8090:8090
 curl localhost:8090
 ```
 
-## Add Ingress example
+### Add Ingress example
 ```
 kubectl create -f ./example/ingress_example.yam
 ```
