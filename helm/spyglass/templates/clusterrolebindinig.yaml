@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spyglass
+  managedFields:
+  - apiVersion: rbac.authorization.k8s.io/v1beta1
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+- kind: ServiceAccount
+  namespace: default
+  name: spyglass

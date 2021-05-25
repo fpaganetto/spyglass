@@ -1,4 +1,4 @@
-FROM scratch as base
+FROM ubuntu as base
 EXPOSE 8090
 
 FROM golang:1.13 as build
