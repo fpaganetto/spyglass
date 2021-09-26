@@ -15,10 +15,9 @@ type application struct {
 
 func (app *application) start() error {
 	app.server = &http.Server{
-		Addr: fmt.Sprintf(":%d", app.config.port),
+		Addr:    fmt.Sprintf(":%d", app.config.port),
+		Handler: routes(),
 	}
-
-	http.HandleFunc("/", discovery)
 
 	err := app.server.ListenAndServe()
 	return err
